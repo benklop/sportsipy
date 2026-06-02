@@ -77,13 +77,7 @@ def _retrieve_all_teams(year, season_page, offensive_stats, defensive_stats):
     team_data_dict = {}
 
     if not year:
-        year = utils._find_year_for_season('ncaaf')
-        # If stats for the requested season do not exist yet (as is the case
-        # right before a new season begins), attempt to pull the previous
-        # year's stats. If it exists, use the previous year instead.
-        if not utils._url_exists(SEASON_PAGE_URL % year) and \
-           utils._url_exists(SEASON_PAGE_URL % str(int(year) - 1)):
-            year = str(int(year) - 1)
+        year = utils._resolve_season_year('ncaaf', SEASON_PAGE_URL, year)
     doc = utils._pull_page(SEASON_PAGE_URL % year, season_page)
     teams_list = utils._get_stats_table(doc, 'div#div_standings')
     offense_doc = utils._pull_page(OFFENSIVE_STATS_URL % year, offensive_stats)
@@ -94,4 +88,17 @@ def _retrieve_all_teams(year, season_page, offensive_stats, defensive_stats):
         utils._no_data_found()
     for stats_list in [teams_list, offense_list, defense_list]:
         team_data_dict = _add_stats_data(stats_list, team_data_dict)
+    return team_data_dict, year
+
+
+def _retrieve_lightweight_teams(year, season_page=None):
+    """Load team identifiers from the season standings page only."""
+    team_data_dict = {}
+    year = utils._resolve_season_year('ncaaf', SEASON_PAGE_URL, year)
+    doc = utils._pull_page(SEASON_PAGE_URL % year, season_page)
+    teams_list = utils._get_stats_table(doc, 'div#div_standings')
+    if not teams_list:
+        utils._no_data_found()
+        return None, None
+    team_data_dict = _add_stats_data(teams_list, team_data_dict)
     return team_data_dict, year

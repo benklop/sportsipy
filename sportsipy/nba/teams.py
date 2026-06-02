@@ -1,10 +1,13 @@
 import pandas as pd
 from .constants import PARSING_SCHEME
 from ..decorators import float_property_decorator, int_property_decorator
-from .nba_utils import _retrieve_all_teams
+from .nba_utils import _retrieve_all_teams, _retrieve_lightweight_teams
 from .. import utils
 from .roster import Roster
 from .schedule import Schedule
+
+
+from sportsipy.team_location import city_property
 
 
 class Team:
@@ -38,6 +41,8 @@ class Team:
         instead of downloading from sports-reference.com. This file should be
         of the Season page for the designated year.
     """
+    city = city_property()
+
     def __init__(self, team_name=None, team_data=None, rank=None, year=None,
                  season_file=None):
         self._year = year
@@ -676,10 +681,13 @@ class Teams:
         instead of downloading from sports-reference.com. This file should be
         of the Season page for the designated year.
     """
-    def __init__(self, year=None, season_file=None):
+    def __init__(self, year=None, season_file=None, lightweight=False):
         self._teams = []
 
-        team_data_dict, year = _retrieve_all_teams(year, season_file)
+        if lightweight:
+            team_data_dict, year = _retrieve_lightweight_teams(year, season_file)
+        else:
+            team_data_dict, year = _retrieve_all_teams(year, season_file)
         self._instantiate_teams(team_data_dict, year)
 
     def __getitem__(self, abbreviation):

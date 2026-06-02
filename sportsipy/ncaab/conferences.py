@@ -1,5 +1,6 @@
 from pyquery import PyQuery as pq
 import re
+import warnings
 from urllib.error import HTTPError
 from .. import utils
 from .constants import CONFERENCE_URL, CONFERENCES_URL
@@ -20,10 +21,14 @@ class Conference:
     year : string (optional)
         A string of the requested year to pull conference information from.
         Defaults to the most recent season.
+    ignore_missing : boolean (optional)
+        When True, skip conferences whose pages are unavailable instead of
+        raising an error.
     """
-    def __init__(self, conference_abbreviation, year=None):
+    def __init__(self, conference_abbreviation, year=None, ignore_missing=False):
         self._teams = {}
         self._conference_abbreviation = conference_abbreviation
+        self._ignore_missing = ignore_missing
 
         self._find_conference_teams(conference_abbreviation, year)
 
@@ -100,19 +105,15 @@ class Conference:
             A string of the requested year to pull conference information from.
         """
         if not year:
-            year = utils._find_year_for_season('ncaab')
-            # If stats for the requested season do not exist yet (as is the
-            # case right before a new season begins), attempt to pull the
-            # previous year's stats. If it exists, use the previous year
-            # instead.
-            if not utils._url_exists(CONFERENCES_URL % year) and \
-               utils._url_exists(CONFERENCES_URL % str(int(year) - 1)):
-                year = str(int(year) - 1)
+            year = utils._resolve_season_year('ncaab', CONFERENCES_URL, year)
         page = self._pull_conference_page(conference_abbreviation, year)
         if not page:
             url = CONFERENCE_URL % (conference_abbreviation, year)
             output = ("Can't pull requested conference page. Ensure the "
                       "following URL exists: %s" % url)
+            if self._ignore_missing:
+                warnings.warn(output)
+                return
             raise ValueError(output)
         conference = page('table#standings tbody tr').items()
         for team in conference:
@@ -147,10 +148,13 @@ class Conferences:
     year : string (optional)
         A string of the requested year to pull conferences from. Defaults to
         the most recent season.
+    ignore_missing : boolean (optional)
+        When True, skip unavailable conference pages instead of raising.
     """
-    def __init__(self, year=None):
+    def __init__(self, year=None, ignore_missing=False):
         self._conferences = {}
         self._team_conference = {}
+        self._ignore_missing = ignore_missing
 
         self._find_conferences(year)
 
@@ -227,25 +231,26 @@ class Conferences:
         year : string
             A string of the requested year to pull conferences from.
         """
-        if not year:
-            year = utils._find_year_for_season('ncaab')
-            # If stats for the requested season do not exist yet (as is the
-            # case right before a new season begins), attempt to pull the
-            # previous year's stats. If it exists, use the previous year
-            # instead.
-            if not utils._url_exists(CONFERENCES_URL % year) and \
-               utils._url_exists(CONFERENCES_URL % str(int(year) - 1)):
-                year = str(int(year) - 1)
+        year = utils._resolve_season_year('ncaab', CONFERENCES_URL, year)
         page = self._pull_conference_page(year)
         if not page:
             output = ("Can't pull requested conference page. Ensure the "
                       "following URL exists: %s" % (CONFERENCES_URL % year))
+            if self._ignore_missing:
+                warnings.warn(output)
+                return
             raise ValueError(output)
         conferences = page('table#conference-summary tbody tr').items()
         for conference in conferences:
             conference_abbreviation = self._get_conference_id(conference)
+            if not conference_abbreviation:
+                continue
             conference_name = conference('td[data-stat="conf_name"]').text()
-            teams_dict = Conference(conference_abbreviation, year).teams
+            teams_dict = Conference(
+                conference_abbreviation,
+                year,
+                self._ignore_missing,
+            ).teams
             conference_dict = {
                     'name': conference_name,
                     'teams': teams_dict

@@ -4,9 +4,12 @@ from .constants import PARSING_SCHEME
 from ..decorators import float_property_decorator, int_property_decorator
 from .. import utils
 from .conferences import Conferences
-from .ncaab_utils import _retrieve_all_teams
+from .ncaab_utils import _retrieve_all_teams, _retrieve_lightweight_teams
 from .roster import Roster
 from .schedule import Schedule
+
+
+from sportsipy.team_location import city_property
 
 
 class Team:
@@ -49,6 +52,8 @@ class Team:
         instead of downloading from sports-reference.com. This file should be
         of the Advanced Opponent Stats page for the designated year.
     """
+    city = city_property()
+
     def __init__(self, team_name=None, team_data=None, team_conference=None,
                  year=None, basic_stats=None, basic_opp_stats=None,
                  adv_stats=None, adv_opp_stats=None):
@@ -1093,13 +1098,21 @@ class Teams:
         be of the Advanced Opponent Stats page for the designated year.
     """
     def __init__(self, year=None, basic_stats=None, basic_opp_stats=None,
-                 adv_stats=None, adv_opp_stats=None):
+                 adv_stats=None, adv_opp_stats=None, lightweight=False):
         self._teams = []
-        self._conferences_dict = Conferences(year).team_conference
-
-        team_data_dict, year = _retrieve_all_teams(year, basic_stats,
-                                                   basic_opp_stats, adv_stats,
-                                                   adv_opp_stats)
+        if lightweight:
+            self._conferences_dict = {}
+            team_data_dict, year = _retrieve_lightweight_teams(year, basic_stats)
+        else:
+            try:
+                self._conferences_dict = Conferences(
+                    year, ignore_missing=True
+                ).team_conference
+            except ValueError:
+                self._conferences_dict = {}
+            team_data_dict, year = _retrieve_all_teams(
+                year, basic_stats, basic_opp_stats, adv_stats, adv_opp_stats
+            )
         self._instantiate_teams(team_data_dict, year)
 
     def __getitem__(self, abbreviation):

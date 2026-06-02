@@ -63,6 +63,23 @@ def _url_exists(url):
     return http_client.url_exists(url)
 
 
+def _resolve_season_year(league, url_template, year=None):
+    """
+    Resolve the effective season year with at most two existence probes.
+
+    Uses cached url_exists results via http_client.
+    """
+    if year:
+        return str(year)
+    year = _find_year_for_season(league)
+    if _url_exists(url_template % year):
+        return str(year)
+    previous = str(int(year) - 1)
+    if _url_exists(url_template % previous):
+        return previous
+    return str(year)
+
+
 def _find_year_for_season(league):
     """
     Return the necessary seaons's year based on the current date.

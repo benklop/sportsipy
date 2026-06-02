@@ -30,13 +30,18 @@ def _retrieve_all_teams(year, season_page=None):
         the year is the request year for the season.
     """
     if not year:
-        year = utils._find_year_for_season('nhl')
-        # If stats for the requested season do not exist yet (as is the case
-        # right before a new season begins), attempt to pull the previous
-        # year's stats. If it exists, use the previous year instead.
-        if not utils._url_exists(SEASON_PAGE_URL % year) and \
-           utils._url_exists(SEASON_PAGE_URL % str(int(year) - 1)):
-            year = str(int(year) - 1)
+        year = utils._resolve_season_year('nhl', SEASON_PAGE_URL, year)
+    doc = utils._pull_page(SEASON_PAGE_URL % year, season_page)
+    teams_list = utils._get_stats_table(doc, 'div#all_stats')
+    if not teams_list:
+        utils._no_data_found()
+        return None, None
+    return teams_list, year
+
+
+def _retrieve_lightweight_teams(year, season_page=None):
+    """Load team identifiers from a single season summary page."""
+    year = utils._resolve_season_year('nhl', SEASON_PAGE_URL, year)
     doc = utils._pull_page(SEASON_PAGE_URL % year, season_page)
     teams_list = utils._get_stats_table(doc, 'div#all_stats')
     if not teams_list:

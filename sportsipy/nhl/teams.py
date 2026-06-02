@@ -3,9 +3,12 @@ import re
 from .constants import PARSING_SCHEME, SEASON_PAGE_URL
 from ..decorators import float_property_decorator, int_property_decorator
 from .. import utils
-from .nhl_utils import _retrieve_all_teams
+from .nhl_utils import _retrieve_all_teams, _retrieve_lightweight_teams
 from .roster import Roster
 from .schedule import Schedule
+
+
+from sportsipy.team_location import city_property
 
 
 class Team:
@@ -40,6 +43,8 @@ class Team:
         instead of downloading from sports-reference.com. This file should be
         of the Season page for the designated year.
     """
+    city = city_property()
+
     def __init__(self, team_name=None, team_data=None, rank=None, year=None,
                  season_page=None):
         self._year = year
@@ -452,10 +457,13 @@ class Teams:
         instead of downloading from sports-reference.com. This file should be
         of the Season page for the designated year.
     """
-    def __init__(self, year=None, season_page=None):
+    def __init__(self, year=None, season_page=None, lightweight=False):
         self._teams = []
 
-        teams_list, year = _retrieve_all_teams(year, season_page)
+        if lightweight:
+            teams_list, year = _retrieve_lightweight_teams(year, season_page)
+        else:
+            teams_list, year = _retrieve_all_teams(year, season_page)
         self._instantiate_teams(teams_list, year)
 
     def __getitem__(self, abbreviation):

@@ -244,19 +244,14 @@ class Conferences:
         year : string
             A string of the requested year to pull conferences from.
         """
-        if not year:
-            year = utils._find_year_for_season('ncaaf')
-            # If stats for the requested season do not exist yet (as is the
-            # case right before a new season begins), attempt to pull the
-            # previous year's stats. If it exists, use the previous year
-            # instead.
-            if not utils._url_exists(CONFERENCES_URL % year) and \
-               utils._url_exists(CONFERENCES_URL % str(int(year) - 1)):
-                year = str(int(year) - 1)
+        year = utils._resolve_season_year('ncaaf', CONFERENCES_URL, year)
         page = self._pull_conference_page(year)
         if not page:
             output = ("Can't pull requested conference page. Ensure the "
                       "following URL exists: %s" % (CONFERENCES_URL % year))
+            if self._ignore_missing:
+                warnings.warn(output)
+                return
             raise ValueError(output)
         conferences = page('table#conferences tbody tr').items()
         for conference in conferences:

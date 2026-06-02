@@ -408,9 +408,9 @@ NATIONALITY = {
     've': 'Venezuela'
 }
 
-SEASON_PAGE_URL = 'http://www.basketball-reference.com/leagues/NBA_%s.html'
+SEASON_PAGE_URL = 'https://www.basketball-reference.com/leagues/NBA_%s.html'
 
-SCHEDULE_URL = 'http://www.basketball-reference.com/teams/%s/%s_games.html'
+SCHEDULE_URL = 'https://www.basketball-reference.com/teams/%s/%s_games.html'
 
 BOXSCORE_URL = 'https://www.basketball-reference.com/boxscores/%s.html'
 

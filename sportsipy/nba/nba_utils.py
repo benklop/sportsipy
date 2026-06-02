@@ -69,21 +69,9 @@ def _retrieve_all_teams(year, season_file=None):
 
     if not year:
         year = utils._find_year_for_season('nba')
-        # Given the delays to the NBA season in 2020, the default season
-        # selection logic is no longer valid after the original season should
-        # have concluded. In this case, the previous season should be pulled
-        # instead.
-        if year == 2021:
-            try:
-                doc = pq(url=SEASON_PAGE_URL % year)
-            except HTTPError:
-                year = str(int(year) - 1)
-        # If stats for the requested season do not exist yet (as is the case
-        # right before a new season begins), attempt to pull the previous
-        # year's stats. If it exists, use the previous year instead.
-        if not utils._url_exists(SEASON_PAGE_URL % year) and \
-           utils._url_exists(SEASON_PAGE_URL % str(int(year) - 1)):
+        if year == 2021 and not utils._url_exists(SEASON_PAGE_URL % year):
             year = str(int(year) - 1)
+        year = utils._resolve_season_year('nba', SEASON_PAGE_URL, year)
     doc = utils._pull_page(SEASON_PAGE_URL % year, season_file)
     teams_list = utils._get_stats_table(doc, 'div#div_totals-team')
     opp_teams_list = utils._get_stats_table(doc, 'div#div_totals-opponent')
@@ -97,4 +85,18 @@ def _retrieve_all_teams(year, season_file=None):
         return None, None
     for stats_list in [teams_list, opp_teams_list, standings_list_E, standings_list_W]:
         team_data_dict = _add_stats_data(stats_list, team_data_dict)
+    return team_data_dict, year
+
+
+def _retrieve_lightweight_teams(year, season_file=None):
+    """Load team identifiers from a single season summary page."""
+    team_data_dict = {}
+
+    year = utils._resolve_season_year('nba', SEASON_PAGE_URL, year)
+    doc = utils._pull_page(SEASON_PAGE_URL % year, season_file)
+    teams_list = utils._get_stats_table(doc, 'div#div_totals-team')
+    if not teams_list:
+        utils._no_data_found()
+        return None, None
+    team_data_dict = _add_stats_data(teams_list, team_data_dict)
     return team_data_dict, year

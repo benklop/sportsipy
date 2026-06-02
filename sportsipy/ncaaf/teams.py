@@ -4,9 +4,12 @@ from .constants import PARSING_SCHEME
 from ..decorators import float_property_decorator, int_property_decorator
 from .. import utils
 from .conferences import Conferences
-from .ncaaf_utils import _retrieve_all_teams
+from .ncaaf_utils import _retrieve_all_teams, _retrieve_lightweight_teams
 from .roster import Roster
 from .schedule import Schedule
+
+
+from sportsipy.team_location import city_property
 
 
 class Team:
@@ -45,6 +48,8 @@ class Team:
         instead of downloading from sports-reference.com. This file should be
         of the Defensive Stats page for the designated year.
     """
+    city = city_property()
+
     def __init__(self, team_name=None, team_data=None, team_conference=None,
                  year=None, season_page=None, offensive_stats=None,
                  defensive_stats=None):
@@ -756,16 +761,19 @@ class Teams:
         of the Defensive Stats page for the designated year.
     """
     def __init__(self, year=None, season_page=None, offensive_stats=None,
-                 defensive_stats=None):
+                 defensive_stats=None, lightweight=False):
         self._teams = []
-        try:
-            self._conferences_dict = Conferences(year, True).team_conference
-        except ValueError:
+        if lightweight:
             self._conferences_dict = {}
-
-        team_data_dict, year = _retrieve_all_teams(year, season_page,
-                                                   offensive_stats,
-                                                   defensive_stats)
+            team_data_dict, year = _retrieve_lightweight_teams(year, season_page)
+        else:
+            try:
+                self._conferences_dict = Conferences(year, True).team_conference
+            except ValueError:
+                self._conferences_dict = {}
+            team_data_dict, year = _retrieve_all_teams(
+                year, season_page, offensive_stats, defensive_stats
+            )
         self._instantiate_teams(team_data_dict, year)
 
     def __getitem__(self, abbreviation):

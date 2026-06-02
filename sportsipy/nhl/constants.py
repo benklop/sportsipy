@@ -230,7 +230,7 @@ BOXSCORE_RETRY = {
     'relative_corsi_for_percentage': 'td[data-stat="corsi_rel"]'
 }
 
-SEASON_PAGE_URL = 'http://www.hockey-reference.com/leagues/NHL_%s.html'
+SEASON_PAGE_URL = 'https://www.hockey-reference.com/leagues/NHL_%s.html'
 
 SCHEDULE_URL = 'https://www.hockey-reference.com/teams/%s/%s_gamelog.html'
 

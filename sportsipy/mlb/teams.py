@@ -7,7 +7,7 @@ from .constants import (ELEMENT_INDEX,
 from functools import wraps
 from .. import utils
 from ..decorators import float_property_decorator, int_property_decorator
-from .mlb_utils import _retrieve_all_teams
+from .mlb_utils import _retrieve_all_teams, _retrieve_lightweight_teams
 from .roster import Roster
 from .schedule import Schedule
 
@@ -28,6 +28,9 @@ def mlb_int_property_decorator(func):
         except (TypeError, ValueError, IndexError):
             return None
     return wrapper
+
+
+from sportsipy.team_location import city_property
 
 
 class Team:
@@ -65,6 +68,8 @@ class Team:
         instead of downloading from sports-reference.com. This file should be
         of the League page for the designated year.
     """
+    city = city_property()
+
     def __init__(self, team_name=None, team_data=None, rank=None, year=None,
                  standings_file=None, teams_file=None):
         self._year = year
@@ -1232,11 +1237,14 @@ class Teams:
         instead of downloading from sports-reference.com. This file should be
         of the League page for the designated year.
     """
-    def __init__(self, year=None, standings_file=None, teams_file=None):
+    def __init__(self, year=None, standings_file=None, teams_file=None, lightweight=False):
         self._teams = []
 
-        team_data_dict, year = _retrieve_all_teams(year, standings_file,
-                                                   teams_file)
+        if lightweight:
+            team_data_dict, year = _retrieve_lightweight_teams(year, standings_file)
+        else:
+            team_data_dict, year = _retrieve_all_teams(year, standings_file,
+                                                       teams_file)
         self._instantiate_teams(team_data_dict, year)
 
     def __str__(self):

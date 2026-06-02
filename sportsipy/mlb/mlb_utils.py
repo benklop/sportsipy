@@ -69,13 +69,7 @@ def _retrieve_all_teams(year, standings_file=None, teams_file=None):
     team_data_dict = {}
 
     if not year:
-        year = utils._find_year_for_season('mlb')
-        # If stats for the requested season do not exist yet (as is the case
-        # right before a new season begins), attempt to pull the previous
-        # year's stats. If it exists, use the previous year instead.
-        if not utils._url_exists(STANDINGS_URL % year) and \
-           utils._url_exists(STANDINGS_URL % str(int(year) - 1)):
-            year = str(int(year) - 1)
+        year = utils._resolve_season_year('mlb', STANDINGS_URL, year)
     doc = utils._pull_page(STANDINGS_URL % year, standings_file)
     div_prefix = 'div#all_expanded_standings_overall'
     standings = utils._get_stats_table(doc, div_prefix)
@@ -88,4 +82,17 @@ def _retrieve_all_teams(year, standings_file=None, teams_file=None):
         return None, None
     for stats_list in [standings, batting_stats, pitching_stats]:
         team_data_dict = _add_stats_data(stats_list, team_data_dict)
+    return team_data_dict, year
+
+
+def _retrieve_lightweight_teams(year, standings_file=None):
+    """Load team identifiers from the standings page only."""
+    team_data_dict = {}
+    year = utils._resolve_season_year('mlb', STANDINGS_URL, year)
+    doc = utils._pull_page(STANDINGS_URL % year, standings_file)
+    standings = utils._get_stats_table(doc, 'div#all_expanded_standings_overall')
+    if not standings:
+        utils._no_data_found()
+        return None, None
+    team_data_dict = _add_stats_data(standings, team_data_dict)
     return team_data_dict, year

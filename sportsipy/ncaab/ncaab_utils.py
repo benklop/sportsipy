@@ -77,13 +77,7 @@ def _retrieve_all_teams(year, basic_stats=None, basic_opp_stats=None,
     team_data_dict = {}
 
     if not year:
-        year = utils._find_year_for_season('ncaab')
-        # If stats for the requested season do not exist yet (as is the case
-        # right before a new season begins), attempt to pull the previous
-        # year's stats. If it exists, use the previous year instead.
-        if not utils._url_exists(BASIC_STATS_URL % year) and \
-           utils._url_exists(BASIC_STATS_URL % str(int(year) - 1)):
-            year = str(int(year) - 1)
+        year = utils._resolve_season_year('ncaab', BASIC_STATS_URL, year)
     doc = utils._pull_page(BASIC_STATS_URL % year, basic_stats)
     teams_list = utils._get_stats_table(doc, 'table#basic_school_stats')
     doc = utils._pull_page(BASIC_OPPONENT_STATS_URL % year, basic_opp_stats)
@@ -98,4 +92,17 @@ def _retrieve_all_teams(year, basic_stats=None, basic_opp_stats=None,
         return None, None
     for stats_list in [teams_list, opp_list, adv_teams_list, adv_opp_list]:
         team_data_dict = _add_stats_data(stats_list, team_data_dict)
+    return team_data_dict, year
+
+
+def _retrieve_lightweight_teams(year, basic_stats=None):
+    """Load team identifiers from the basic school stats page only."""
+    team_data_dict = {}
+    year = utils._resolve_season_year('ncaab', BASIC_STATS_URL, year)
+    doc = utils._pull_page(BASIC_STATS_URL % year, basic_stats)
+    teams_list = utils._get_stats_table(doc, 'table#basic_school_stats')
+    if not teams_list:
+        utils._no_data_found()
+        return None, None
+    team_data_dict = _add_stats_data(teams_list, team_data_dict)
     return team_data_dict, year

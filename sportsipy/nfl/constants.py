@@ -397,7 +397,7 @@ DETAILED_STATS = [
     'drop_percentage'
 ]
 
-SEASON_PAGE_URL = 'http://www.pro-football-reference.com/years/%s/'
+SEASON_PAGE_URL = 'https://www.pro-football-reference.com/years/%s/'
 
 SCHEDULE_URL = 'https://www.pro-football-reference.com/teams/%s/%s/gamelog/'
 
