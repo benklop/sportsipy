@@ -91,13 +91,10 @@ def city_for_team_name(name: Optional[str]) -> Optional[str]:
 
 
 def city_property():
-    """Descriptor-style helper for Team.city on classes with a name property."""
+    """Deprecated: city inference removed; use iptv-proxy location registry instead."""
 
     class _CityProperty:
         def __get__(self, obj, objtype=None):
-            if obj is None:
-                return self
-            name = getattr(obj, 'name', None)
-            return city_for_team_name(name)
+            return None
 
     return _CityProperty()
