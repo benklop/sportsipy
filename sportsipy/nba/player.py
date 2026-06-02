@@ -168,6 +168,7 @@ class AbstractPlayer:
             short_field = str(field)[1:]
             if short_field == 'player_id' or \
                short_field == 'index' or \
+               short_field == 'season' or \
                short_field == 'most_recent_season' or \
                short_field == 'contract' or \
                short_field == 'name' or \

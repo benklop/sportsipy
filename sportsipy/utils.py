@@ -1,6 +1,7 @@
 import re
-import requests
 from datetime import datetime
+
+from sportsipy import http_client
 from lxml.etree import ParserError, XMLSyntaxError
 from pyquery import PyQuery as pq
 
@@ -59,20 +60,7 @@ def _url_exists(url):
         Evaluates to True when the URL exists and is valid, otherwise returns
         False.
     """
-    try:
-        response = requests.head(url)
-        if response.status_code == 301:
-            response = requests.get(url)
-            if response.status_code < 400:
-                return True
-            else:
-                return False
-        elif response.status_code < 400:
-            return True
-        else:
-            return False
-    except Exception:
-        return False
+    return http_client.url_exists(url)
 
 
 def _find_year_for_season(league):
@@ -317,7 +305,8 @@ def _pull_page(url=None, local_file=None):
         with open(local_file, 'r', encoding='utf8') as filehandle:
             return pq(filehandle.read())
     if url:
-        return pq(url=url)
+        html = http_client.fetch(url)
+        return pq(html)
     raise ValueError('Expected either a URL or a local data file!')
 
 

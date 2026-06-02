@@ -758,7 +758,10 @@ class Teams:
     def __init__(self, year=None, season_page=None, offensive_stats=None,
                  defensive_stats=None):
         self._teams = []
-        self._conferences_dict = Conferences(year, True).team_conference
+        try:
+            self._conferences_dict = Conferences(year, True).team_conference
+        except ValueError:
+            self._conferences_dict = {}
 
         team_data_dict, year = _retrieve_all_teams(year, season_page,
                                                    offensive_stats,

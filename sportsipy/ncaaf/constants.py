@@ -331,7 +331,7 @@ RANKINGS_SCHEME = {
     'change': 'td[data-stat="rank_diff"]'
 }
 
-SEASON_PAGE_URL = 'http://www.sports-reference.com/cfb/years/%s-standings.html'
+SEASON_PAGE_URL = 'https://www.sports-reference.com/cfb/years/%s.html'
 
 OFFENSIVE_STATS_URL = ('https://www.sports-reference.com/cfb/years/'
                        '%s-team-offense.html')

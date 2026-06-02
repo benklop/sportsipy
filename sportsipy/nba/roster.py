@@ -259,7 +259,14 @@ class Player(AbstractPlayer):
             A string representation of the season in the format 'YYYY-YY', such
             as '2017-18'.
         """
-        return utils._parse_field(PLAYER_SCHEME, row, 'season')
+        season = utils._parse_field(PLAYER_SCHEME, row, 'season')
+        if season:
+            return season
+        return utils._parse_field(
+            {'season': 'td[data-stat="year_id"]:first'},
+            row,
+            'season',
+        )
 
     def _combine_season_stats(self, table_rows, career_stats, all_stats_dict):
         """
@@ -293,6 +300,8 @@ class Player(AbstractPlayer):
             table_rows = []
         for row in table_rows:
             season = self._parse_season(row)
+            if not season or ' Yrs' in season or season.endswith(' Avg'):
+                continue
             try:
                 all_stats_dict[season]['data'] += str(row)
             except KeyError:
@@ -301,10 +310,13 @@ class Player(AbstractPlayer):
         self._most_recent_season = most_recent_season
         if not career_stats:
             return all_stats_dict
+        career_html = ''.join(str(row) for row in career_stats)
+        if not career_html:
+            return all_stats_dict
         try:
-            all_stats_dict['Career']['data'] += str(next(career_stats))
+            all_stats_dict['Career']['data'] += career_html
         except KeyError:
-            all_stats_dict['Career'] = {'data': str(next(career_stats))}
+            all_stats_dict['Career'] = {'data': career_html}
         return all_stats_dict
 
     def _combine_all_stats(self, player_info):
@@ -329,8 +341,21 @@ class Player(AbstractPlayer):
         """
         all_stats_dict = {}
 
-        for table_id in ['totals', 'per_poss', 'advanced', 'shooting',
-                         'advanced_pbp', 'all_salaries']:
+        table_ids = [
+            'totals_stats',
+            'totals',
+            'per_game_stats',
+            'per_poss',
+            'advanced',
+            'shooting',
+            'advanced_pbp',
+            'all_salaries',
+        ]
+        seen = set()
+        for table_id in table_ids:
+            if table_id in seen:
+                continue
+            seen.add(table_id)
             table_items = utils._get_stats_table(player_info,
                                                  'table#%s' % table_id)
             career_items = utils._get_stats_table(player_info,
@@ -523,7 +548,11 @@ class Player(AbstractPlayer):
         self._parse_birth_date(player_info)
         self._parse_contract(player_info)
         all_stats = self._combine_all_stats(player_info)
-        setattr(self, '_season', all_stats.keys())
+        setattr(
+            self,
+            '_season',
+            [season for season in all_stats.keys() if season is not None],
+        )
         return all_stats
 
     def _find_initial_index(self):
@@ -534,12 +563,12 @@ class Player(AbstractPlayer):
         the player's career stats. Upon being called, the index of the 'Career'
         element should be the index value.
         """
-        index = 0
-        for season in self._season:
+        for index, season in enumerate(self._season):
             if season == 'Career':
                 self._index = index
-                break
-            index += 1
+                return
+        if self._season:
+            self._index = 0
 
     def __call__(self, requested_season=''):
         """
