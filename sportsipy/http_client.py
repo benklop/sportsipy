@@ -2,8 +2,7 @@
 HTTP fetching for Sports Reference sites with rate limiting and retries.
 
 Sports Reference blocks aggressive scrapers (403/429). All outbound requests
-share one session, sliding-window rate limits, per-domain circuit breakers,
-and optional per-run budgets.
+share one session, sliding-window rate limits, and per-domain circuit breakers.
 """
 
 import logging
@@ -44,8 +43,6 @@ DOMAIN_INTERVAL_OVERRIDES = {
 _session = None
 _last_request_at = 0.0
 _request_timestamps: deque = deque()
-_max_requests_per_run = None
-_run_request_count = 0
 _url_exists_cache: dict = {}
 
 _domain_failures: dict = {}
@@ -59,10 +56,6 @@ class SportsReferenceBlockedError(HTTPError):
         super().__init__(url, code, msg, hdrs, fp)
         self.domain = domain
         self.retry_at = retry_at
-
-
-class SportsReferenceBudgetExhausted(Exception):
-    """Raised when the per-run HTTP budget is exhausted."""
 
 
 def get_session():
@@ -150,19 +143,7 @@ def _record_block(domain, status_code, headers):
     _open_circuit(domain, cooldown)
 
 
-def _check_run_budget():
-    global _run_request_count
-    if _max_requests_per_run is None:
-        return
-    if _run_request_count >= _max_requests_per_run:
-        raise SportsReferenceBudgetExhausted(
-            f'HTTP budget exhausted ({_max_requests_per_run} requests/run)'
-        )
-
-
 def _record_request():
-    global _run_request_count
-    _run_request_count += 1
     now = time.monotonic()
     _request_timestamps.append(now)
     cutoff = now - 60.0
@@ -195,13 +176,6 @@ def _throttle(domain):
     _last_request_at = time.monotonic()
 
 
-def set_max_requests_per_run(limit):
-    """Set a hard cap on HTTP requests for this process (None disables)."""
-    global _max_requests_per_run, _run_request_count
-    _max_requests_per_run = limit
-    _run_request_count = 0
-
-
 def get_stats():
     """Return limiter and circuit breaker state for monitoring."""
     now = time.monotonic()
@@ -216,8 +190,6 @@ def get_stats():
     requests_last_minute = sum(1 for ts in _request_timestamps if ts >= cutoff)
     return {
         'requests_last_minute': requests_last_minute,
-        'requests_this_run': _run_request_count,
-        'max_requests_per_run': _max_requests_per_run,
         'max_requests_per_minute': DEFAULT_MAX_REQUESTS_PER_MINUTE,
         'min_interval_seconds': DEFAULT_MIN_INTERVAL,
         'circuits': circuits,
@@ -231,14 +203,8 @@ def fetch(url, method='get', timeout=60, **kwargs):
     Returns response body text. 403 opens the domain circuit immediately.
     429 may retry once after Retry-After.
     """
-    if os.environ.get('SPORTSIPY_OFFLINE') == '1':
-        raise SportsReferenceBudgetExhausted(
-            'SPORTSIPY_OFFLINE=1 — network fetch disabled'
-        )
-
     domain = _domain_for_url(url)
     _check_circuit(domain)
-    _check_run_budget()
 
     session = get_session()
     headers = dict(session.headers)
@@ -358,7 +324,6 @@ def url_exists(url, timeout=30, cache_ttl=3600):
         session = get_session()
         domain = _domain_for_url(url)
         _check_circuit(domain)
-        _check_run_budget()
         _throttle(domain)
         response = session.get(
             url,
@@ -374,8 +339,7 @@ def url_exists(url, timeout=30, cache_ttl=3600):
             _record_success(domain)
         elif response.status_code in (403, 429):
             _record_block(domain, response.status_code, response.headers)
-    except (requests.RequestException, SportsReferenceBlockedError,
-            SportsReferenceBudgetExhausted):
+    except (requests.RequestException, SportsReferenceBlockedError):
         ok = False
 
     _url_exists_cache[url] = (ok, now + cache_ttl)

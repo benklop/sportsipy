@@ -1,6 +1,6 @@
 """Public HTTP entry point for Sports Reference page loads."""
 
-from sportsipy.http_client import fetch, get_stats, set_max_requests_per_run, url_exists
+from sportsipy.http_client import fetch, get_stats, url_exists
 
 
 def get_html(url, method='get', timeout=60, **kwargs):

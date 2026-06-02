@@ -1,7 +1,6 @@
 """Unit tests for HTTP rate limiting and circuit breaker."""
 
 import pytest
-from urllib.error import HTTPError
 
 from sportsipy import http_client
 
@@ -12,16 +11,7 @@ def reset_http_state():
     http_client._url_exists_cache.clear()
     http_client._domain_failures.clear()
     http_client._domain_circuit_open_until.clear()
-    http_client.set_max_requests_per_run(None)
-    http_client._run_request_count = 0
     yield
-
-
-def test_set_max_requests_per_run_raises_budget():
-    http_client.set_max_requests_per_run(1)
-    http_client._run_request_count = 1
-    with pytest.raises(http_client.SportsReferenceBudgetExhausted):
-        http_client._check_run_budget()
 
 
 def test_circuit_opens_after_block(monkeypatch):
@@ -88,5 +78,4 @@ def test_get_stats_tracks_requests(monkeypatch):
 
     http_client.fetch('https://example.com/1')
     stats = http_client.get_stats()
-    assert stats['requests_this_run'] == 1
     assert stats['requests_last_minute'] == 1
