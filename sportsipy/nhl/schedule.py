@@ -90,6 +90,10 @@ class Game:
         game_data : PyQuery object
             A PyQuery object containing the information specific to a game.
         """
+        abbr = game_data('td[data-stat="opp_name_abbr"]:first').text().strip()
+        if abbr:
+            setattr(self, '_opponent_abbr', abbr)
+            return
         name = game_data('td[data-stat="opp_name"]:first')
         name = re.sub(r'.*/teams/', '', str(name))
         name = re.sub('/.*', '', name)
@@ -107,7 +111,9 @@ class Game:
         game_data : PyQuery object
             A PyQuery object containing the information specific to a game.
         """
-        boxscore = game_data('td[data-stat="date_game"]:first')
+        boxscore = game_data('td[data-stat="date"]:first')
+        if not boxscore:
+            boxscore = game_data('td[data-stat="date_game"]:first')
         boxscore = re.sub(r'.*/boxscores/', '', str(boxscore))
         boxscore = re.sub(r'\.html.*', '', str(boxscore))
         setattr(self, '_boxscore', boxscore)
@@ -606,11 +612,20 @@ class Schedule:
                                                  str(int(year) - 1))):
                 year = str(int(year) - 1)
         doc = pq(url=SCHEDULE_URL % (abbreviation, year))
-        schedule = utils._get_stats_table(doc, 'table#tm_gamelog_rs')
+        schedule = utils._get_stats_table(doc, 'table#team_games')
+        if not schedule:
+            # Legacy table id before hockey-reference HTML refresh
+            schedule = utils._get_stats_table(doc, 'table#tm_gamelog_rs')
         if not schedule:
             utils._no_data_found()
             return
 
+        self._add_games_to_schedule(schedule, year)
+        if 'id="team_games_post"' in str(doc):
+            playoffs = utils._get_stats_table(doc, 'table#team_games_post')
+            self._add_games_to_schedule(playoffs, year)
+
+    def _add_games_to_schedule(self, schedule, year):
         for item in schedule:
             if 'class="thead"' in str(item):
                 continue
