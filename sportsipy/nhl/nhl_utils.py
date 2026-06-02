@@ -37,14 +37,3 @@ def _retrieve_all_teams(year, season_page=None):
         utils._no_data_found()
         return None, None
     return teams_list, year
-
-
-def _retrieve_lightweight_teams(year, season_page=None):
-    """Load team identifiers from a single season summary page."""
-    year = utils._resolve_season_year('nhl', SEASON_PAGE_URL, year)
-    doc = utils._pull_page(SEASON_PAGE_URL % year, season_page)
-    teams_list = utils._get_stats_table(doc, 'div#all_stats')
-    if not teams_list:
-        utils._no_data_found()
-        return None, None
-    return teams_list, year

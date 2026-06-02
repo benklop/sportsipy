@@ -7,7 +7,7 @@ from .constants import (ELEMENT_INDEX,
 from functools import wraps
 from .. import utils
 from ..decorators import float_property_decorator, int_property_decorator
-from .mlb_utils import _retrieve_all_teams, _retrieve_lightweight_teams
+from .mlb_utils import _retrieve_all_teams
 from .roster import Roster
 from .schedule import Schedule
 
@@ -1237,14 +1237,11 @@ class Teams:
         instead of downloading from sports-reference.com. This file should be
         of the League page for the designated year.
     """
-    def __init__(self, year=None, standings_file=None, teams_file=None, lightweight=False):
+    def __init__(self, year=None, standings_file=None, teams_file=None):
         self._teams = []
 
-        if lightweight:
-            team_data_dict, year = _retrieve_lightweight_teams(year, standings_file)
-        else:
-            team_data_dict, year = _retrieve_all_teams(year, standings_file,
-                                                       teams_file)
+        team_data_dict, year = _retrieve_all_teams(year, standings_file,
+                                                   teams_file)
         self._instantiate_teams(team_data_dict, year)
 
     def __str__(self):

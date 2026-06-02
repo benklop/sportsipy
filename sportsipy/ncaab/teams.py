@@ -4,7 +4,7 @@ from .constants import PARSING_SCHEME
 from ..decorators import float_property_decorator, int_property_decorator
 from .. import utils
 from .conferences import Conferences
-from .ncaab_utils import _retrieve_all_teams, _retrieve_lightweight_teams
+from .ncaab_utils import _retrieve_all_teams
 from .roster import Roster
 from .schedule import Schedule
 
@@ -1098,21 +1098,17 @@ class Teams:
         be of the Advanced Opponent Stats page for the designated year.
     """
     def __init__(self, year=None, basic_stats=None, basic_opp_stats=None,
-                 adv_stats=None, adv_opp_stats=None, lightweight=False):
+                 adv_stats=None, adv_opp_stats=None):
         self._teams = []
-        if lightweight:
+        try:
+            self._conferences_dict = Conferences(
+                year, ignore_missing=True
+            ).team_conference
+        except ValueError:
             self._conferences_dict = {}
-            team_data_dict, year = _retrieve_lightweight_teams(year, basic_stats)
-        else:
-            try:
-                self._conferences_dict = Conferences(
-                    year, ignore_missing=True
-                ).team_conference
-            except ValueError:
-                self._conferences_dict = {}
-            team_data_dict, year = _retrieve_all_teams(
-                year, basic_stats, basic_opp_stats, adv_stats, adv_opp_stats
-            )
+        team_data_dict, year = _retrieve_all_teams(
+            year, basic_stats, basic_opp_stats, adv_stats, adv_opp_stats
+        )
         self._instantiate_teams(team_data_dict, year)
 
     def __getitem__(self, abbreviation):

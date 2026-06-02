@@ -13,7 +13,7 @@ from .constants import (CONF_CHAMPIONSHIP,
 from ..constants import LOSS, WIN
 from ..decorators import float_property_decorator, int_property_decorator
 from .. import utils
-from .nfl_utils import _retrieve_all_teams, _retrieve_lightweight_teams
+from .nfl_utils import _retrieve_all_teams
 from .roster import Roster
 from .schedule import Schedule
 
@@ -597,13 +597,10 @@ class Teams:
         instead of downloading from sports-reference.com. This file should be
         of the Season page for the designated year.
     """
-    def __init__(self, year=None, season_page=None, lightweight=False):
+    def __init__(self, year=None, season_page=None):
         self._teams = []
 
-        if lightweight:
-            team_data_dict, year = _retrieve_lightweight_teams(year, season_page)
-        else:
-            team_data_dict, year = _retrieve_all_teams(year, season_page)
+        team_data_dict, year = _retrieve_all_teams(year, season_page)
         self._instantiate_teams(team_data_dict, year)
 
     def __getitem__(self, abbreviation):

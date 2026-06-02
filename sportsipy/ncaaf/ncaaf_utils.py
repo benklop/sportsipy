@@ -89,16 +89,3 @@ def _retrieve_all_teams(year, season_page, offensive_stats, defensive_stats):
     for stats_list in [teams_list, offense_list, defense_list]:
         team_data_dict = _add_stats_data(stats_list, team_data_dict)
     return team_data_dict, year
-
-
-def _retrieve_lightweight_teams(year, season_page=None):
-    """Load team identifiers from the season standings page only."""
-    team_data_dict = {}
-    year = utils._resolve_season_year('ncaaf', SEASON_PAGE_URL, year)
-    doc = utils._pull_page(SEASON_PAGE_URL % year, season_page)
-    teams_list = utils._get_stats_table(doc, 'div#div_standings')
-    if not teams_list:
-        utils._no_data_found()
-        return None, None
-    team_data_dict = _add_stats_data(teams_list, team_data_dict)
-    return team_data_dict, year

@@ -83,16 +83,3 @@ def _retrieve_all_teams(year, standings_file=None, teams_file=None):
     for stats_list in [standings, batting_stats, pitching_stats]:
         team_data_dict = _add_stats_data(stats_list, team_data_dict)
     return team_data_dict, year
-
-
-def _retrieve_lightweight_teams(year, standings_file=None):
-    """Load team identifiers from the standings page only."""
-    team_data_dict = {}
-    year = utils._resolve_season_year('mlb', STANDINGS_URL, year)
-    doc = utils._pull_page(STANDINGS_URL % year, standings_file)
-    standings = utils._get_stats_table(doc, 'div#all_expanded_standings_overall')
-    if not standings:
-        utils._no_data_found()
-        return None, None
-    team_data_dict = _add_stats_data(standings, team_data_dict)
-    return team_data_dict, year

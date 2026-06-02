@@ -86,17 +86,3 @@ def _retrieve_all_teams(year, season_file=None):
     for stats_list in [teams_list, opp_teams_list, standings_list_E, standings_list_W]:
         team_data_dict = _add_stats_data(stats_list, team_data_dict)
     return team_data_dict, year
-
-
-def _retrieve_lightweight_teams(year, season_file=None):
-    """Load team identifiers from a single season summary page."""
-    team_data_dict = {}
-
-    year = utils._resolve_season_year('nba', SEASON_PAGE_URL, year)
-    doc = utils._pull_page(SEASON_PAGE_URL % year, season_file)
-    teams_list = utils._get_stats_table(doc, 'div#div_totals-team')
-    if not teams_list:
-        utils._no_data_found()
-        return None, None
-    team_data_dict = _add_stats_data(teams_list, team_data_dict)
-    return team_data_dict, year

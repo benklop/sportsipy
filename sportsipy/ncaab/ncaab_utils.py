@@ -93,16 +93,3 @@ def _retrieve_all_teams(year, basic_stats=None, basic_opp_stats=None,
     for stats_list in [teams_list, opp_list, adv_teams_list, adv_opp_list]:
         team_data_dict = _add_stats_data(stats_list, team_data_dict)
     return team_data_dict, year
-
-
-def _retrieve_lightweight_teams(year, basic_stats=None):
-    """Load team identifiers from the basic school stats page only."""
-    team_data_dict = {}
-    year = utils._resolve_season_year('ncaab', BASIC_STATS_URL, year)
-    doc = utils._pull_page(BASIC_STATS_URL % year, basic_stats)
-    teams_list = utils._get_stats_table(doc, 'table#basic_school_stats')
-    if not teams_list:
-        utils._no_data_found()
-        return None, None
-    team_data_dict = _add_stats_data(teams_list, team_data_dict)
-    return team_data_dict, year

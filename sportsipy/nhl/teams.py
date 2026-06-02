@@ -3,7 +3,7 @@ import re
 from .constants import PARSING_SCHEME, SEASON_PAGE_URL
 from ..decorators import float_property_decorator, int_property_decorator
 from .. import utils
-from .nhl_utils import _retrieve_all_teams, _retrieve_lightweight_teams
+from .nhl_utils import _retrieve_all_teams
 from .roster import Roster
 from .schedule import Schedule
 
@@ -457,13 +457,10 @@ class Teams:
         instead of downloading from sports-reference.com. This file should be
         of the Season page for the designated year.
     """
-    def __init__(self, year=None, season_page=None, lightweight=False):
+    def __init__(self, year=None, season_page=None):
         self._teams = []
 
-        if lightweight:
-            teams_list, year = _retrieve_lightweight_teams(year, season_page)
-        else:
-            teams_list, year = _retrieve_all_teams(year, season_page)
+        teams_list, year = _retrieve_all_teams(year, season_page)
         self._instantiate_teams(teams_list, year)
 
     def __getitem__(self, abbreviation):
